@@ -15,14 +15,22 @@ const curriculum = [
 ];
 const progressKey = 'soundStepsIndex';
 const blendKey = 'soundStepsBlendComplete';
+const metKey = 'soundStepsMet';
+const sessionLength = 150000;
 const firstWords = ['mat', 'sat'];
 let soundIndex = Number(localStorage.getItem(progressKey) || 0);
 let blendComplete = localStorage.getItem(blendKey) === 'yes';
+let metSounds = new Set(JSON.parse(localStorage.getItem(metKey) || '[]'));
+if (!metSounds.size && soundIndex > 0) {
+  curriculum.slice(0, soundIndex).forEach(x => metSounds.add(x[0]));
+  localStorage.setItem(metKey, JSON.stringify([...metSounds]));
+}
 if (!Number.isFinite(soundIndex) || soundIndex < 0 || soundIndex >= curriculum.length) soundIndex = 0;
 if (soundIndex > 4 && !blendComplete) soundIndex = 4;
 let stage = 0, tries = 0, enabled = true, done = false, mode = 'letter';
 let selectedTile = null;
 let wordRound = 0, targetWord = firstWords[0];
+let sessionEnded = false, sessionTimer;
 const $ = id => document.getElementById(id);
 const item = () => curriculum[soundIndex];
 
@@ -59,12 +67,24 @@ function hearWordBlend(word = targetWord, instruction = '') {
   });
   say(firstSoundModels.join('. ') + '. Listen to the word: ' + word + '. ' + instruction);
 }
+function markMet(letter) {
+  metSounds.add(letter);
+  localStorage.setItem(metKey, JSON.stringify([...metSounds]));
+}
 function updateMap() {
   const soundCard = (v, i) => {
-    const state = i < soundIndex ? 'done' : i === soundIndex ? 'here' : '';
+    const state = metSounds.has(v[0]) ? 'done' : i === soundIndex ? 'here' : '';
     return '<div class="map-item ' + state + '"><span class="map-letter">' +
-      (i < soundIndex ? '✓' : v[0]) + '</span><b>' + v[1] + '</b></div>';
+      (metSounds.has(v[0]) ? '✓' : v[0]) + '</span><b>' + v[1] + '</b></div>';
   };
+  const met = curriculum.filter(v => metSounds.has(v[0]));
+  const revisitCards = met.length
+    ? met.map(v => '<div class="parent-sound"><b>' + v[0] + '</b><span>' + v[1] + '</span><small>Revisit</small></div>').join('')
+    : '<p class="parent-empty">No sounds met yet. Each one will appear here after he finds its letter.</p>';
+  $('parentSummary').innerHTML =
+    '<div class="summary-stats"><div><b>' + met.length + '</b><span>sounds met</span></div><div><b>' + (curriculum.length - met.length) + '</b><span>still to explore</span></div></div>' +
+    '<div class="revisit-block"><h3>Met so far · revisit together</h3><div class="parent-sound-list">' + revisitCards + '</div></div>' +
+    '<p class="up-next">Up next: <b>' + item()[0] + ' · ' + item()[1] + '</b></p>';
   $('map').innerHTML =
     '<section class="map-band"><div><span class="map-kicker">Step 1 · hear and notice</span><h3>First sounds</h3><p>Listen for a sound, then find its letter.</p></div><div class="map-grid">' +
     curriculum.slice(0, 5).map((v, i) => soundCard(v, i)).join('') +
@@ -111,6 +131,11 @@ function render() {
   updateMap();
   modelPrompt();
 }
+function beginSession() {
+  clearTimeout(sessionTimer);
+  sessionEnded = false;
+  sessionTimer = setTimeout(() => { if (!sessionEnded) finish(); }, sessionLength);
+}
 function answer(btn) {
   if (done) return;
   if (mode === 'blend-choice') {
@@ -132,6 +157,7 @@ function answer(btn) {
   tries++;
   if (btn.dataset.value === item()[0]) {
     done = true;
+    markMet(item()[0]);
     btn.classList.add('good');
     $('feedback').textContent = '✨';
     $('next').classList.remove('hidden');
@@ -255,6 +281,9 @@ function fillWordSlot(tile, slot) {
   }
 }
 function finish() {
+  if (sessionEnded) return;
+  sessionEnded = true;
+  clearTimeout(sessionTimer);
   $('card').classList.add('hidden');
   $('done').style.display = 'block';
   $('progressFill').style.width = ((soundIndex + 1) / curriculum.length * 100) + '%';
@@ -306,14 +335,31 @@ $('next').onclick = () => {
     render();
   }
 };
-$('again').onclick = () => { render(); };
+$('again').onclick = () => { render(); beginSession(); };
 $('soundBtn').onclick = () => {
   enabled = !enabled;
-  $('soundBtn').textContent = enabled ? '🔊' : '🔇';
+  $('soundBtn').textContent = enabled ? '🔊 On' : '🔇 Off';
   $('soundBtn').setAttribute('aria-label', enabled ? 'Turn sound off' : 'Turn sound on');
   if (!enabled && 'speechSynthesis' in window) window.speechSynthesis.cancel();
 };
-$('mapBtn').onclick = () => { $('sheet').classList.add('open'); updateMap(); };
 $('closeSheet').onclick = () => $('sheet').classList.remove('open');
 $('sheet').onclick = e => { if (e.target === $('sheet')) $('sheet').classList.remove('open'); };
+let holdTimer, holdOpened = false;
+const parentButton = $('parentGesture');
+parentButton.onpointerdown = e => {
+  e.preventDefault(); holdOpened = false;
+  holdTimer = setTimeout(() => {
+    holdOpened = true;
+    updateMap();
+    $('sheet').classList.add('open');
+    if (navigator.vibrate) navigator.vibrate(25);
+  }, 1100);
+};
+['pointerup', 'pointercancel', 'pointerleave'].forEach(type => parentButton.addEventListener(type, () => clearTimeout(holdTimer)));
+parentButton.oncontextmenu = e => e.preventDefault();
+document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+document.addEventListener('gesturestart', e => e.preventDefault(), { passive: false });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') $('sheet').classList.remove('open'); });
+beginSession();
 render();
+
