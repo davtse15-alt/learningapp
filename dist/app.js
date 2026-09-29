@@ -1,10 +1,7 @@
-Warning: truncated output (original token count: 3458)
-Total output lines: 302
-
 const curriculum = [
-  ['m', 'moon', '🌙', 'mmm'], ['s', 'sun', '☀️', 'sss'],
-  ['f', 'fish', '🐟', 'fff'], ['a', 'apple', '🍎', 'apple'],
-  ['t', 'top', '🪀', 'top'], ['n', 'nest', '🪺', 'nnn'],
+  ['m', 'moon', 'assets/moon.jpg', 'mmm'], ['s', 'sun', 'assets/sun.jpg', 'sss'],
+  ['f', 'fish', 'assets/fish.jpg', 'fff'], ['a', 'apple', 'assets/apple.jpg', 'apple'],
+  ['t', 'top', 'assets/top.jpg', 'top'], ['n', 'nest', '🪺', 'nnn'],
   ['i', 'igloo', '🧊', 'igloo'], ['p', 'pig', '🐷', 'pig'],
   ['o', 'octopus', '🐙', 'octopus'], ['c', 'cat', '🐱', 'cat'],
   ['r', 'rain', '🌧️', 'rrr'], ['e', 'egg', '🥚', 'egg'],
@@ -28,6 +25,12 @@ let selectedTile = null;
 let wordRound = 0, targetWord = firstWords[0];
 const $ = id => document.getElementById(id);
 const item = () => curriculum[soundIndex];
+
+function pictureArt(entry, className = 'lesson-art') {
+  return entry[2].startsWith('assets/')
+    ? '<img class="' + className + '" src="./' + entry[2] + '" alt="" aria-hidden="true">'
+    : '<span class="' + className + ' emoji-art" aria-hidden="true">' + entry[2] + '</span>';
+}
 
 function say(text) {
   if (!enabled || !('speechSynthesis' in window)) return;
@@ -57,11 +60,20 @@ function hearWordBlend(word = targetWord, instruction = '') {
   say(firstSoundModels.join('. ') + '. Listen to the word: ' + word + '. ' + instruction);
 }
 function updateMap() {
-  $('map').innerHTML = curriculum.map((v, i) =>
-    '<div class="map-item ' + (i < soundIndex ? 'done' : '') + '"><span class="map-letter">' +
-    (i < soundIndex ? '✓' : v[0]) + '</span><span><b>' + v[1] + '</b><small>' +
-    (i < soundIndex ? 'Introduced' : i === soundIndex ? 'We are here' : 'Coming up') +
-    '</small></span></div>').join('');
+  const soundCard = (v, i) => {
+    const state = i < soundIndex ? 'done' : i === soundIndex ? 'here' : '';
+    return '<div class="map-item ' + state + '"><span class="map-letter">' +
+      (i < soundIndex ? '✓' : v[0]) + '</span><b>' + v[1] + '</b></div>';
+  };
+  $('map').innerHTML =
+    '<section class="map-band"><div><span class="map-kicker">Step 1 · hear and notice</span><h3>First sounds</h3><p>Listen for a sound, then find its letter.</p></div><div class="map-grid">' +
+    curriculum.slice(0, 5).map((v, i) => soundCard(v, i)).join('') +
+    '</div></section>' +
+    '<section class="map-band"><div><span class="map-kicker">Step 2 · put sounds together</span><h3>Read a first word</h3><p>Use the sounds you have met to build a word.</p></div><div class="map-grid"><span class="map-word">m · a · t</span><span class="map-word">s · a · t</span></div></section>' +
+    '<section class="map-band"><div><span class="map-kicker">Step 3 · keep exploring</span><h3>More letter sounds</h3><p>Meet a few at a time and revisit familiar sounds.</p></div><div class="map-grid">' +
+    curriculum.slice(5).map((v, i) => soundCard(v, i + 5)).join('') +
+    '</div></section>' +
+    '<section class="map-band"><div><span class="map-kicker">Step 4 · later on</span><h3>Letter pairs & reading</h3><p>When the sounds feel familiar, begin noticing how letters work together.</p></div><div class="map-grid"><span class="map-word map-future">sh</span><span class="map-word map-future">ch</span><span class="map-word map-future">th</span><span class="map-word map-future">vowel teams</span><span class="map-word map-future">read together</span></div></section>';
 }
 function render() {
   mode = 'letter'; stage = 0; tries = 0; done = false;
@@ -74,7 +86,7 @@ function render() {
   $('intro').textContent = 'Listen to the sound. Look at the picture.';
   $('bigLetter').textContent = c[0];
   $('bigLetter').setAttribute('aria-label', 'Hear the ' + c[0] + ' sound');
-  $('picture').innerHTML = c[2];
+  $('picture').innerHTML = pictureArt(c) + '<small>' + c[1] + '</small>';
   $('picture').setAttribute('aria-label', 'Hear the word ' + c[1]);
   $('caption').textContent = 'Listen. Look. Tap the letter.';
   $('question').textContent = 'Listen to the first sound.';
@@ -130,7 +142,44 @@ function answer(btn) {
   } else {
     btn.classList.add('retry');
     $('feedback').textContent = '🔊';
-    modelPrompt('Try again. Find the letter for that first sound.…458 tokens truncated…tContent = 'Put each sound in its place.';
+    modelPrompt('Try again. Find the letter for that first sound.');
+  }
+}
+function startBlend() {
+  mode = 'blend-choice'; stage = 3; done = false; tries = 0;
+  targetWord = firstWords[wordRound];
+  $('progressLabel').textContent = 'Word ' + (wordRound + 1) + ' of ' + firstWords.length;
+  $('progressCount').textContent = (soundIndex + 1) + ' of ' + curriculum.length;
+  $('progressFill').style.width = (5 / curriculum.length * 100) + '%';
+  $('stageName').textContent = 'Blend the sounds';
+  $('title').textContent = 'Listen and find';
+  $('intro').textContent = 'Listen to the sounds. Find the picture.';
+  $('caption').textContent = 'Tap the speaker to hear again.';
+  $('question').textContent = 'Which picture?';
+  $('bigLetter').classList.add('hidden');
+  $('arrow').classList.add('hidden');
+  $('picture').classList.add('hidden');
+  $('blendPreview').classList.remove('hidden');
+  $('playSound').classList.remove('hidden');
+  const wordPictures = {
+    mat: '<img src="./assets/mat.jpg" alt="" aria-hidden="true">',
+    sat: '<img src="./assets/sat.jpg" alt="" aria-hidden="true">'
+  };
+  $('choices').innerHTML = firstWords.map(word =>
+    '<button class="choice word-choice picture-choice" data-value="' + word + '" aria-label="' + word + '">' + wordPictures[word] + '</button>').join('');
+  $('blendPreview').innerHTML = targetWord.split('').map(letter =>
+    '<button class="blend-sound" data-sound="' + exampleSound(letter) + '" aria-label="Hear the ' + letter + ' sound">' + letter + '</button>').join('');
+  $('choices').classList.remove('hidden');
+  $('wordBuilder').classList.add('hidden');
+  $('feedback').textContent = '';
+  $('next').classList.add('hidden');
+  hearWordBlend(targetWord, 'Find the picture for ' + targetWord + '.');
+}
+function startWordBuild() {
+  mode = 'blend-build'; stage = 4; done = false; selectedTile = null;
+  $('stageName').textContent = 'Build the word';
+  $('title').textContent = 'Build it';
+  $('intro').textContent = 'Put each sound in its place.';
   $('caption').textContent = 'Tap a letter, then the next space.';
   $('question').textContent = 'Listen, then build.';
   $('choices').classList.add('hidden');
@@ -268,4 +317,3 @@ $('mapBtn').onclick = () => { $('sheet').classList.add('open'); updateMap(); };
 $('closeSheet').onclick = () => $('sheet').classList.remove('open');
 $('sheet').onclick = e => { if (e.target === $('sheet')) $('sheet').classList.remove('open'); };
 render();
-
