@@ -158,6 +158,7 @@ function answer(btn) {
   if (btn.dataset.value === item()[0]) {
     done = true;
     markMet(item()[0]);
+    $('progressFill').style.width = ((soundIndex + 1) / curriculum.length * 100) + '%';
     btn.classList.add('good');
     $('feedback').textContent = '✨';
     $('next').classList.remove('hidden');
