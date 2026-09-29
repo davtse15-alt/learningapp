@@ -129,7 +129,7 @@ function render() {
   $('card').classList.remove('hidden');
   $('done').style.display = 'none';
   updateMap();
-  modelPrompt();
+  modelPrompt('Tap the big letter to hear it again. Then find the letter for its first sound.');
 }
 function beginSession() {
   clearTimeout(sessionTimer);
@@ -297,7 +297,7 @@ $('bigLetter').onclick = () => {
   if (mode === 'letter' && stage === 0) {
     stage = 1;
     $('choices').classList.remove('hidden');
-    modelPrompt('Now find the letter for that first sound.');
+    modelPrompt('Now find the letter that says ' + item()[3] + '.');
     return;
   }
   modelPrompt('Listen for the first sound.');
@@ -306,6 +306,7 @@ $('picture').onclick = () => say(item()[1]);
 $('playSound').onclick = () => {
   if (mode === 'blend-choice') hearWordBlend(targetWord, 'Find the picture for ' + targetWord + '.');
   else if (mode === 'blend-build') hearWordBlend(targetWord, 'Tap a letter to hear it. Put the first sound in the first space.');
+  else if (mode === 'letter') modelPrompt('Tap the big letter to hear it again. Find the letter for its first sound.');
   else hearSound();
 };
 $('blendPreview').onclick = e => {
