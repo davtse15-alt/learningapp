@@ -159,7 +159,7 @@ function makeLetterChoices(letter, salt = 0) {
   options.sort((a, b) => ((a.charCodeAt(0) * 7 + salt * 5) % 13) - ((b.charCodeAt(0) * 7 + salt * 5) % 13));
   return options;
 }
-function render() {
+function render(playLessonPrompt = true) {
   mode = 'letter'; stage = 1; tries = 0; done = false;
   const c = item();
   $('progressLabel').textContent = 'Level ' + (soundIndex + 1);
@@ -191,7 +191,8 @@ function render() {
   $('card').classList.remove('hidden');
   $('done').style.display = 'none';
   updateMap();
-  modelPrompt();
+  if (playLessonPrompt) modelPrompt();
+  else hearSound();
 }
 function chooseSessionReviews() {
   const familiar = curriculum.filter((v, i) => metSounds.has(v[0]) && i < soundIndex);
@@ -318,7 +319,9 @@ function chooseBlendWord() {
 function startBlend() {
   mode = 'blend-choice'; stage = 3; done = false; tries = 0;
   targetWord = chooseBlendWord();
-  if (!targetWord) { finish(); return; }
+  // Early levels may not yet have enough taught sounds to make a decodable
+  // word. Keep the session going with another short, familiar sound turn.
+  if (!targetWord) { render(false); return; }
   $('progressLabel').textContent = 'Level ' + (soundIndex + 1) + ' · blend';
   $('progressCount').textContent = (soundIndex + 1) + ' of ' + curriculum.length;
   $('progressFill').style.width = levelProgress() + '%';
@@ -419,7 +422,7 @@ function fillWordSlot(tile, slot) {
     done = true; mode = 'blend-complete';
     $('feedback').textContent = '🎉';
     $('next').textContent = '➜';
-    $('next').setAttribute('aria-label', 'Finish this level');
+    $('next').setAttribute('aria-label', 'Keep playing');
     $('next').classList.remove('hidden');
     hearWordBlend();
   } else {
@@ -475,7 +478,7 @@ $('next').onclick = () => {
     return;
   }
   if (mode === 'blend-choice' && done) { startWordBuild(); return; }
-  if (mode === 'blend-complete' && done) finish();
+  if (mode === 'blend-complete' && done) startBlend();
 };
 $('again').onclick = () => {
   $('done').style.display = 'none';
