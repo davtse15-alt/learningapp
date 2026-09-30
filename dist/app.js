@@ -137,7 +137,7 @@ function render() {
   modelPrompt();
 }
 function chooseSessionReviews() {
-  const familiar = curriculum.filter(v => metSounds.has(v[0]));
+  const familiar = curriculum.filter((v, i) => metSounds.has(v[0]) && i < soundIndex);
   if (!familiar.length) return [];
   const count = Math.min(2, familiar.length);
   const offsetKey = 'soundStepsReviewOffset';
