@@ -95,6 +95,8 @@ function playSequence(names) {
     currentAudio = new Audio('./assets/voice/' + names[index] + '.mp3');
     currentAudio.preload = 'auto';
     currentAudio.onended = () => playAt(index + 1);
+    // If a clip fails to load, skip it instead of stalling the whole chain.
+    currentAudio.onerror = () => playAt(index + 1);
     currentAudio.play().catch(() => {});
   };
   playAt(0);
@@ -129,13 +131,13 @@ function updateMap() {
     const state = mastered ? 'done' : i === soundIndex ? 'here' : '';
     return '<div class="map-item ' + state + '"><span class="map-letter">' +
       (mastered ? '✓' : v[0]) + '</span><b>' + v[1] + '</b>' +
-      (!mastered && metSounds.has(v[0]) ? '<small>' + (storedMastery[v[0]]?.sessions?.length || 0) + ' of 3 sessions</small>' : '') + '</div>';
+      (!mastered && metSounds.has(v[0]) ? '<small>' + (storedMastery[v[0]]?.sessions?.length || 0) + ' of 3</small>' : '') + '</div>';
   };
   const revisitCards = seen.length
     ? seen.map(v => '<div class="parent-sound"><b>' + v[0] + '</b><span>' + v[1] + '</span><small>' + (isMastered(v[0]) ? 'Met' : (storedMastery[v[0]]?.sessions?.length || 0) + ' of 3') + '</small></div>').join('')
     : '<p class="parent-empty">Sounds met during lessons will appear here.</p>';
   $('parentSummary').innerHTML =
-    '<div class="summary-stats"><div><b>' + masteredCount + '</b><span>sounds mastered</span></div><div><b>' + evidence + ' / 3</b><span>correct sessions on ' + item()[0] + '</span></div></div>' +
+    '<div class="summary-stats"><div><b>' + masteredCount + '</b><span>sounds mastered</span></div><div><b>' + evidence + ' / 3</b><span>correct answers on ' + item()[0] + '</span></div></div>' +
     '<div class="revisit-block"><h3>Sounds to revisit</h3><div class="parent-sound-list">' + revisitCards + '</div></div>' +
     '<p class="up-next">Current level: <b>' + (soundIndex + 1) + ' · ' + item()[0] + ' · ' + item()[1] + '</b></p>';
   $('map').innerHTML =
@@ -285,16 +287,18 @@ function answer(btn) {
     done = true;
     const letter = item()[0];
     if (!storedMastery[letter]) storedMastery[letter] = { sessions: [] };
-    if (!storedMastery[letter].sessions.includes(sessionId)) {
-      storedMastery[letter].sessions.push(sessionId);
-      storedMastery[letter].sessions = storedMastery[letter].sessions.slice(-3);
-      localStorage.setItem(masteryKey, JSON.stringify(storedMastery));
-    }
+    // Count every correct answer (one per turn; `done` blocks repeats within
+    // a turn). Previously this recorded one entry per session id, so a sound
+    // could only advance after three separate sessions and the app looked
+    // stuck on the first sound.
+    storedMastery[letter].sessions.push(Date.now());
+    storedMastery[letter].sessions = storedMastery[letter].sessions.slice(-3);
+    localStorage.setItem(masteryKey, JSON.stringify(storedMastery));
     markMet(item()[0]);
     $('progressFill').style.width = levelProgress() + '%';
     btn.classList.add('good');
     const evidence = storedMastery[letter].sessions.length;
-    $('feedback').textContent = isMastered(letter) ? '🎉 Sound learned!' : '✨ ' + evidence + ' of 3 sessions';
+    $('feedback').textContent = isMastered(letter) ? '🎉 Sound learned!' : '✨ ' + evidence + ' of 3';
     $('next').classList.remove('hidden');
     $('next').textContent = '➜';
     $('next').setAttribute('aria-label', isMastered(letter) ? 'Meet the next sound' : 'Keep practicing this sound');
