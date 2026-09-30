@@ -10,6 +10,8 @@ The app runs as static HTML, CSS, JavaScript, and bundled audio from the `dist` 
 
 Each play session practices the current sound, revisits up to two familiar sounds, and blends decodable words when enough sounds are known. Early levels repeat short sound turns until the selected session time is up; they do not stop just because a blend is not available yet. Review shows the picture and asks for its first letter without revealing the answer; the spoken model comes after a choice. Sessions end at the grown-up selected time with an “All done!” screen. To open the grown-up view, press and hold the flower beside the Sound Steps name. It shows sounds met, sounds to revisit, the next sound, and the learning path. Progress is stored in this browser on this device.
 
+In the grown-up view, use **Save backup** to download a JSON progress file. Move it with Files, AirDrop, or another method, then choose **Restore backup** on the other device. Restore merges answer progress and session length with the current browser and reloads the app. No progress is sent to a server.
+
 ## Publish with GitHub Pages
 
 In the repository, open **Settings → Pages** and choose **GitHub Actions** as the build and deployment source. The workflow in `.github/workflows/pages.yml` publishes the contents of `dist` after a push to `main`.

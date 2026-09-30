@@ -495,10 +495,81 @@ $('next').onclick = () => {
   if (mode === 'blend-choice' && done) { startWordBuild(); return; }
   if (mode === 'blend-complete' && done) startBlend();
 };
+
+function exportProgress() {
+  const backup = {
+    format: 'sound-steps-progress',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    mastery: Object.fromEntries(curriculum
+      .filter(([letter]) => storedMastery[letter]?.sessions?.length)
+      .map(([letter]) => [letter, storedMastery[letter].sessions.slice(-3)])),
+    metSounds: [...metSounds],
+    sessionMinutes: sessionLength / 60000
+  };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'sound-steps-progress-' + new Date().toISOString().slice(0, 10) + '.json';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  $('backupStatus').textContent = 'Backup saved as a file. Keep it in Files or send it to your other device.';
+}
+async function importProgress(file) {
+  if (!file || file.size > 100000) throw new Error('Choose a valid Sound Steps backup file.');
+  const backup = JSON.parse(await file.text());
+  const validLetters = new Set(curriculum.map(([letter]) => letter));
+  if (!backup || backup.format !== 'sound-steps-progress' || backup.version !== 1 ||
+      !backup.mastery || typeof backup.mastery !== 'object' || Array.isArray(backup.mastery) ||
+      !Array.isArray(backup.metSounds)) {
+    throw new Error('That file is not a Sound Steps progress backup.');
+  }
+  for (const [letter, answers] of Object.entries(backup.mastery)) {
+    if (!validLetters.has(letter) || !Array.isArray(answers) || answers.length > 100 ||
+        answers.some(value => !((typeof value === 'string' && value.length <= 100) || (typeof value === 'number' && Number.isFinite(value))))) {
+      throw new Error('That backup has an invalid progress record.');
+    }
+  }
+  const incomingMet = backup.metSounds.filter(letter => validLetters.has(letter));
+  for (const letter of validLetters) {
+    const incoming = backup.mastery[letter] || [];
+    if (!incoming.length) continue;
+    if (!storedMastery[letter]) storedMastery[letter] = { sessions: [] };
+    const merged = [...storedMastery[letter].sessions, ...incoming];
+    const unique = [...new Map(merged.map(value => [typeof value + ':' + String(value), value])).values()];
+    storedMastery[letter].sessions = unique.slice(-3);
+  }
+  metSounds = new Set([...metSounds, ...incomingMet, ...Object.keys(backup.mastery)]);
+  localStorage.setItem(masteryKey, JSON.stringify(storedMastery));
+  localStorage.setItem(metKey, JSON.stringify([...metSounds]));
+  if ([1, 1.5, 2, 2.5, 3, 4, 5].includes(backup.sessionMinutes)) {
+    sessionLength = backup.sessionMinutes * 60000;
+    localStorage.setItem(sessionLengthKey, String(backup.sessionMinutes));
+  }
+  soundIndex = findCurrentLevel();
+  localStorage.setItem(progressKey, String(soundIndex));
+  $('backupStatus').textContent = 'Progress restored and merged. Reloading the app…';
+  setTimeout(() => location.reload(), 250);
+}
+
 $('again').onclick = () => {
   $('done').style.display = 'none';
   $('startGate').classList.remove('hidden');
 };
+
+$('exportProgress').onclick = exportProgress;
+$('importProgress').onclick = () => $('progressFile').click();
+$('progressFile').onchange = async e => {
+  const file = e.target.files[0];
+  $('backupStatus').textContent = '';
+  try { await importProgress(file); }
+  catch (error) { $('backupStatus').textContent = error.message || 'Could not restore that backup.'; }
+  finally { e.target.value = ''; }
+};
+
 $('startButton').onclick = () => beginSession();
 $('sessionMinutes').value = String(sessionLength / 60000);
 $('sessionMinutes').onchange = e => {
