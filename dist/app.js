@@ -1,17 +1,17 @@
 const curriculum = [
   ['m', 'moon', 'assets/moon.jpg', 'mmm'], ['s', 'sun', 'assets/sun.jpg', 'sss'],
   ['f', 'fish', 'assets/fish.jpg', 'fff'], ['a', 'apple', 'assets/apple.jpg', 'apple'],
-  ['t', 'top', 'assets/top.jpg', 'top'], ['n', 'nest', '🪺', 'nnn'],
-  ['i', 'igloo', '🧊', 'igloo'], ['p', 'pig', '🐷', 'pig'],
-  ['o', 'octopus', '🐙', 'octopus'], ['c', 'cat', '🐱', 'cat'],
-  ['r', 'rain', '🌧️', 'rrr'], ['e', 'egg', '🥚', 'egg'],
-  ['h', 'hat', '🎩', 'hhh'], ['d', 'dog', '🐶', 'dog'],
-  ['u', 'umbrella', '☂️', 'umbrella'], ['l', 'leaf', '🍃', 'lll'],
-  ['b', 'ball', '⚽', 'ball'], ['g', 'goat', '🐐', 'g'],
-  ['k', 'kite', '🪁', 'kite'], ['v', 'van', '🚐', 'vvv'],
-  ['w', 'web', '🕸️', 'www'], ['y', 'yo-yo', '🪀', 'yyy'],
-  ['z', 'zip', '🤐', 'zzz'], ['j', 'jam', '🍓', 'jam'],
-  ['x', 'box', '📦', 'box'], ['q', 'queen', '👑', 'queen']
+  ['t', 'top', 'assets/top.jpg', 'top'], ['n', 'nest', 'assets/nest.jpg', 'nnn'],
+  ['i', 'igloo', 'assets/igloo.jpg', 'igloo'], ['p', 'pig', 'assets/pig.jpg', 'pig'],
+  ['o', 'octopus', 'assets/octopus.jpg', 'octopus'], ['c', 'cat', 'assets/cat.jpg', 'cat'],
+  ['r', 'rain', 'assets/rain.jpg', 'rrr'], ['e', 'egg', 'assets/egg.jpg', 'egg'],
+  ['h', 'hat', 'assets/hat.jpg', 'hhh'], ['d', 'dog', 'assets/dog.jpg', 'dog'],
+  ['u', 'umbrella', 'assets/umbrella.jpg', 'umbrella'], ['l', 'leaf', 'assets/leaf.jpg', 'lll'],
+  ['b', 'ball', 'assets/ball.jpg', 'ball'], ['g', 'goat', 'assets/goat.jpg', 'g'],
+  ['k', 'kite', 'assets/kite.jpg', 'kite'], ['v', 'van', 'assets/van.jpg', 'vvv'],
+  ['w', 'web', 'assets/web.jpg', 'www'], ['y', 'yo-yo', 'assets/yoyo.jpg', 'yyy'],
+  ['z', 'zip', 'assets/zip.jpg', 'zzz'], ['j', 'jam', 'assets/jam.jpg', 'jam'],
+  ['x', 'box', 'assets/box.jpg', 'box'], ['q', 'queen', 'assets/queen.jpg', 'queen']
 ];
 const progressKey = 'soundStepsIndex';
 const blendKey = 'soundStepsBlendComplete';
@@ -37,9 +37,7 @@ const $ = id => document.getElementById(id);
 const item = () => curriculum[soundIndex];
 
 function pictureArt(entry, className = 'lesson-art') {
-  return entry[2].startsWith('assets/')
-    ? '<img class="' + className + '" src="./' + entry[2] + '" alt="" aria-hidden="true">'
-    : '<span class="' + className + ' emoji-art" aria-hidden="true">' + entry[2] + '</span>';
+  return '<img class="' + className + '" src="./' + entry[2] + '" alt="" aria-hidden="true">';
 }
 
 function playClip(name) {
