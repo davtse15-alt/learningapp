@@ -196,6 +196,25 @@ main { max-width: 1120px; padding-left: clamp(18px, 4vw, 48px); padding-right: c
 .parent-map-title { margin: 20px 0 0; }
 .done-screen { margin: auto 0; }
 
+.actions { position: relative; z-index: 4; width: 100%; min-height: 76px; overflow: visible; padding: 4px 4px 8px; }
+.primary { display: grid; place-items: center; min-width: 76px; min-height: 68px; }
+.blend-picture { display: grid; place-items: center; width: 100%; height: 100%; font-size: clamp(54px, 9vw, 82px); }
+.blend-picture img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.word-builder-art { display: grid; place-items: center; width: 74px; height: 74px; border-radius: 20px; background: #f1e9d8; font-size: 48px; overflow: hidden; }
+.word-builder-art img { width: 100%; height: 100%; object-fit: contain; }
+.word-slots { flex-wrap: nowrap; }
+.session-select { min-width: 130px; background: #fffefa; }
+.sound-toggle { flex: 0 0 auto; }
+.start-gate { position: fixed; inset: 0; z-index: 8; display: grid; place-items: center; padding: max(18px, env(safe-area-inset-top)) 18px max(18px, env(safe-area-inset-bottom)); background: radial-gradient(ellipse at 50% 5%, #e2f0ed, #f6f3e9 58%, #f5eee0); }
+.start-gate.hidden { display: none; }
+.start-card { position: relative; display: grid; justify-items: center; gap: 16px; width: min(100%, 560px); padding: clamp(28px, 7vw, 58px) 22px; border: 1px solid #e4e8df; border-radius: 34px; background: #fffefa; text-align: center; box-shadow: 0 24px 65px #29445416; }
+.start-sun { font-size: clamp(50px, 11vw, 72px); }
+.start-flower { position: absolute; top: 18px; right: 22px; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: #e6f1e7; color: #4f806f; font-size: 22px; }
+.start-card h1 { margin: 0; color: #26394a; font: 700 clamp(29px, 6vw, 40px) Georgia, serif; letter-spacing: -.035em; }
+.start-card p { max-width: 300px; margin: 0; color: #667684; font-size: 15px; line-height: 1.45; }
+.start-button { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 76px; margin-top: 8px; padding: 14px 27px; border: 0; border-radius: 24px; background: #315a70; color: #fffefa; box-shadow: 0 6px 0 #234254; font-size: 24px; font-weight: 900; cursor: pointer; touch-action: manipulation; }
+.start-button:active { transform: translateY(3px); box-shadow: 0 3px 0 #234254; }
+
 @media (min-width: 820px) {
   .activity { min-height: 300px; }
   .picture-card { width: 220px; height: 220px; }
@@ -203,22 +222,58 @@ main { max-width: 1120px; padding-left: clamp(18px, 4vw, 48px); padding-right: c
 @media (max-width: 620px) {
   .brand { font-size: 12px; }
   .brand-mark { width: 36px; height: 36px; }
-  .shell { gap: 12px; }
-  .card { padding: 14px; border-radius: 26px; }
-  .activity { min-height: 200px; border-radius: 23px; padding: 13px 8px; gap: 10px; }
-  .sound-letter { width: 102px; height: 102px; border-radius: 26px; font-size: 70px; }
-  .picture-card { width: 126px; height: 126px; border-radius: 25px; }
-  .play-sound { width: 76px; height: 76px; margin: -4px auto 4px; font-size: 38px; }
-  .choices { min-width: min(100%, 310px); gap: 11px; padding: 10px 11px 13px; }
-  .choice { width: 78px; height: 72px; }
+  .shell { gap: 8px; padding: 5px 0; }
+  .card { padding: 12px; border-radius: 26px; overflow: visible; }
+  .activity { min-height: clamp(112px, 21svh, 166px); margin: 0 0 8px; border-radius: 23px; padding: 10px 7px; gap: 8px; }
+  .sound-letter { width: clamp(76px, 22vw, 102px); height: clamp(76px, 22vw, 102px); border-radius: 23px; font-size: clamp(52px, 15vw, 70px); }
+  .picture-card { width: clamp(92px, 26vw, 126px); height: clamp(92px, 26vw, 126px); border-radius: 23px; }
+  .play-sound { width: 56px; height: 56px; margin: -3px auto 0; font-size: 30px; }
+  .choices { min-width: min(100%, 280px); gap: 8px; padding: 8px; }
+  .choice { width: clamp(56px, 17vw, 78px); height: 58px; }
+  .actions { min-height: 70px; margin-top: 0; padding: 4px 4px 8px; }
+  .primary { min-width: 72px; min-height: 60px; padding: 8px 18px; font-size: 28px; }
+  .word-tile { width: 52px; height: 52px; font-size: 30px; }
+  .word-slot { flex: 0 1 58px; width: 58px; height: 58px; font-size: 30px; }
+  .parent-settings { flex-wrap: wrap; }
+  .sound-toggle { margin-left: auto; }
   .map-band { grid-template-columns: 1fr; gap: 10px; padding: 14px; }
   .map-band h3 { font-size: 20px; }
   .map-item { min-width: 43px; min-height: 44px; padding: 4px; }
   .map-letter { width: 24px; height: 24px; font-size: 15px; }
 }
 @media (max-height: 740px) {
-  .activity { min-height: 180px; }
-  .sound-letter { width: 100px; height: 100px; }
-  .picture-card { width: 132px; height: 132px; }
+  .shell { gap: 5px; padding: 2px 0; }
+  .card { padding-top: 10px; padding-bottom: 8px; }
+  .activity { min-height: clamp(98px, 19svh, 140px); margin-bottom: 5px; }
+  .sound-letter { width: clamp(72px, 18vw, 90px); height: clamp(72px, 18vw, 90px); }
+  .picture-card { width: clamp(86px, 22vw, 110px); height: clamp(86px, 22vw, 110px); }
+  .play-sound { width: 48px; height: 48px; font-size: 26px; }
+  .choices { padding: 6px; }
+  .choice { height: 52px; }
+  .actions { min-height: 60px; padding-bottom: 3px; }
+  .primary { min-height: 54px; }
 }
-
+@media (max-height: 560px) {
+  main { padding-top: 4px; padding-bottom: 4px; }
+  .top { min-height: 34px; }
+  .brand-mark { width: 30px; height: 30px; }
+  .progress-wrap { min-height: 10px; gap: 5px; }
+  .shell { padding: 0; gap: 3px; }
+  .card { padding: 7px; border-radius: 20px; }
+  .activity { min-height: 78px; margin-bottom: 3px; padding: 5px; }
+  .sound-letter { width: 68px; height: 68px; font-size: 48px; }
+  .picture-card { width: 78px; height: 78px; }
+  .play-sound { width: 38px; height: 38px; margin: 0 auto; font-size: 21px; }
+  .choices { padding: 4px; gap: 5px; }
+  .choice { width: 48px; height: 42px; font-size: 30px; }
+  .feedback { min-height: 16px; margin-top: 2px; }
+  .actions { min-height: 46px; padding: 1px; }
+  .primary { min-width: 66px; min-height: 43px; }
+  .start-gate { padding: 8px; }
+  .start-card { gap: 8px; padding: 12px; border-radius: 22px; }
+  .start-sun { font-size: 35px; }
+  .start-flower { top: 8px; right: 10px; width: 28px; height: 28px; font-size: 16px; }
+  .start-card h1 { font-size: 25px; }
+  .start-card p { font-size: 13px; }
+  .start-button { min-height: 52px; margin-top: 0; padding: 8px 18px; font-size: 19px; }
+}
