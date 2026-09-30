@@ -59,16 +59,19 @@ function playSequence(names) {
   playAt(0);
 }
 function hearSound() {
-  playClip('lesson_' + item()[0]);
+  playClip('sound_' + item()[0]);
 }
 function modelPrompt() {
   playClip('lesson_' + item()[0]);
+}
+function hearWord(word = item()[1]) {
+  playClip('word_' + word.replaceAll('-', ''));
 }
 function exampleSound(letter) {
   return curriculum.find(x => x[0] === letter)?.[3] || letter;
 }
 function hearWordBlend(word = targetWord) {
-  playClip('blend_' + word);
+  hearWord(word);
 }
 function markMet(letter) {
   metSounds.add(letter);
@@ -196,11 +199,11 @@ function answer(btn) {
       $('feedback').textContent = '✨';
       $('next').classList.remove('hidden');
       $('next').setAttribute('aria-label', reviewCursor + 1 < reviewQueue.length ? 'Next familiar sound' : 'Start a new sound');
-      playSequence(['praise', 'lesson_' + reviewQueue[reviewCursor][0]]);
+      playSequence(['praise', 'sound_' + reviewQueue[reviewCursor][0]]);
     } else {
       btn.classList.add('retry');
       $('feedback').textContent = '🔊';
-      playSequence(['try_again', 'lesson_' + reviewQueue[reviewCursor][0]]);
+      playSequence(['try_again_short', 'sound_' + reviewQueue[reviewCursor][0]]);
     }
     return;
   }
@@ -216,7 +219,7 @@ function answer(btn) {
     } else {
       btn.classList.add('retry');
       $('feedback').textContent = '🔊';
-      playSequence(['try_again', 'blend_' + targetWord]);
+      playSequence(['try_again_short', 'word_' + targetWord]);
     }
     return;
   }
@@ -231,11 +234,11 @@ function answer(btn) {
     const nextLabel = soundIndex === 4 && !blendComplete ? 'Blend the sounds' : soundIndex === curriculum.length - 1 ? 'Finish for today' : 'Next sound';
     $('next').textContent = '➜';
     $('next').setAttribute('aria-label', nextLabel);
-    playClip('praise');
+    playSequence(['praise', 'sound_' + item()[0]]);
   } else {
     btn.classList.add('retry');
     $('feedback').textContent = '🔊';
-    playSequence(['try_again', 'lesson_' + item()[0]]);
+    playSequence(['try_again_short', 'sound_' + item()[0]]);
   }
 }
 function startBlend() {
@@ -266,7 +269,7 @@ function startBlend() {
   $('wordBuilder').classList.add('hidden');
   $('feedback').textContent = '';
   $('next').classList.add('hidden');
-  hearWordBlend(targetWord);
+  playClip('blend_' + targetWord);
 }
 function startWordBuild() {
   mode = 'blend-build'; stage = 4; done = false; selectedTile = null;
@@ -291,7 +294,7 @@ function startWordBuild() {
       $('wordTiles').querySelectorAll('.word-tile').forEach(t => t.style.borderColor = '');
       tile.style.borderColor = '#789b7e';
       const c = curriculum.find(x => x[0] === tile.dataset.letter);
-      playClip('lesson_' + c[0]);
+      playClip('sound_' + c[0]);
     };
     tile.onpointerdown = e => {
       e.currentTarget.setPointerCapture(e.pointerId);
@@ -317,13 +320,13 @@ function fillWordSlot(tile, slot) {
   const nextIndex = [...$('wordSlots').querySelectorAll('.word-slot')].findIndex(s => !s.classList.contains('filled'));
   if (Number(slot.dataset.index) !== nextIndex) {
     $('feedback').textContent = '👈';
-    playClip('build_word');
+    playClip('try_again_short');
     return;
   }
   if (tile.dataset.letter !== expected) {
     $('feedback').textContent = '🔊';
     const c = curriculum.find(x => x[0] === tile.dataset.letter);
-    playClip('lesson_' + c[0]);
+    playClip('sound_' + c[0]);
     return;
   }
   slot.textContent = tile.dataset.letter;
@@ -344,7 +347,7 @@ function fillWordSlot(tile, slot) {
     const nextSlot = [...$('wordSlots').querySelectorAll('.word-slot')].find(s => !s.classList.contains('filled'));
     if (nextSlot) nextSlot.classList.add('current');
     $('feedback').textContent = '✨';
-    playClip('next_sound');
+    playClip('sound_' + expected);
   }
 }
 function finish() {
@@ -361,21 +364,21 @@ function finish() {
 
 $('bigLetter').onclick = () => {
   $('bigLetter').classList.remove('pulse'); void $('bigLetter').offsetWidth; $('bigLetter').classList.add('pulse');
-  modelPrompt();
+  hearSound();
 };
-$('picture').onclick = () => mode === 'review' ? playClip('review_prompt') : hearSound();
+$('picture').onclick = () => hearWord(mode === 'review' ? reviewQueue[reviewCursor][1] : item()[1]);
 $('playSound').onclick = () => {
-  if (mode === 'review') playClip('review_prompt');
+  if (mode === 'review') hearWord(reviewQueue[reviewCursor][1]);
   else if (mode === 'blend-choice') hearWordBlend(targetWord);
-  else if (mode === 'blend-build') playClip('build_word');
-  else if (mode === 'letter') modelPrompt();
+  else if (mode === 'blend-build') hearWordBlend(targetWord);
+  else if (mode === 'letter') hearSound();
   else hearSound();
 };
 $('blendPreview').onclick = e => {
   const b = e.target.closest('.blend-sound');
   if (!b) return;
   const c = curriculum.find(x => x[0] === b.textContent);
-  if (c) playClip('lesson_' + c[0]);
+  if (c) playClip('sound_' + c[0]);
 };
 $('choices').onclick = e => { const b = e.target.closest('.choice'); if (b) answer(b); };
 $('next').onclick = () => {
@@ -433,4 +436,3 @@ document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preven
 document.addEventListener('gesturestart', e => e.preventDefault(), { passive: false });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') $('sheet').classList.remove('open'); });
 beginSession();
-
