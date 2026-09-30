@@ -58,6 +58,7 @@ let sessionEnded = false, sessionTimer;
 let currentAudio = null;
 let reviewQueue = [], reviewCursor = 0;
 let sessionId = 0;
+let nextLevelAfterReview = false;
 const $ = id => document.getElementById(id);
 const item = () => curriculum[soundIndex];
 
@@ -242,6 +243,7 @@ function beginSession() {
   sessionTimer = setTimeout(() => { if (!sessionEnded) finish(); }, sessionLength);
   reviewQueue = chooseSessionReviews();
   reviewCursor = 0;
+  nextLevelAfterReview = false;
   $('startGate').classList.add('hidden');
   render();
 }
@@ -291,10 +293,11 @@ function answer(btn) {
     markMet(item()[0]);
     $('progressFill').style.width = levelProgress() + '%';
     btn.classList.add('good');
-    $('feedback').textContent = '✨';
+    const evidence = storedMastery[letter].sessions.length;
+    $('feedback').textContent = isMastered(letter) ? '🎉 Sound learned!' : '✨ ' + evidence + ' of 3 sessions';
     $('next').classList.remove('hidden');
     $('next').textContent = '➜';
-    $('next').setAttribute('aria-label', 'Continue this level');
+    $('next').setAttribute('aria-label', isMastered(letter) ? 'Meet the next sound' : 'Keep practicing this sound');
     updateMap();
     playSequence(['praise', 'sound_' + item()[0]]);
   } else {
@@ -467,13 +470,21 @@ $('blendPreview').onclick = e => {
 $('choices').onclick = e => { const b = e.target.closest('.choice'); if (b) answer(b); };
 $('next').onclick = () => {
   if (mode === 'letter' && done) {
-    if (reviewQueue.length) renderReview();
+    if (isMastered(item()[0])) {
+      soundIndex = findCurrentLevel();
+      reviewQueue = chooseSessionReviews();
+      reviewCursor = 0;
+      nextLevelAfterReview = true;
+      if (reviewQueue.length) renderReview();
+      else { nextLevelAfterReview = false; render(); }
+    } else if (reviewCursor < reviewQueue.length) renderReview();
     else startBlend();
     return;
   }
   if (mode === 'review' && done) {
     reviewCursor++;
     if (reviewCursor < reviewQueue.length) renderReview();
+    else if (nextLevelAfterReview) { nextLevelAfterReview = false; render(); }
     else startBlend();
     return;
   }
