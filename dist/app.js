@@ -32,6 +32,7 @@ let selectedTile = null;
 let wordRound = 0, targetWord = firstWords[0];
 let sessionEnded = false, sessionTimer;
 let currentAudio = null;
+let reviewQueue = [], reviewCursor = 0;
 const $ = id => document.getElementById(id);
 const item = () => curriculum[soundIndex];
 
@@ -135,13 +136,76 @@ function render() {
   updateMap();
   modelPrompt();
 }
+function chooseSessionReviews() {
+  const familiar = curriculum.filter(v => metSounds.has(v[0]));
+  if (!familiar.length) return [];
+  const count = Math.min(2, familiar.length);
+  const offsetKey = 'soundStepsReviewOffset';
+  const offset = Number(localStorage.getItem(offsetKey) || 0) % familiar.length;
+  const chosen = Array.from({ length: count }, (_, i) => familiar[(offset + i) % familiar.length]);
+  localStorage.setItem(offsetKey, String((offset + count) % familiar.length));
+  return chosen;
+}
+function renderReview() {
+  mode = 'review'; stage = 0; tries = 0; done = false;
+  const c = reviewQueue[reviewCursor];
+  $('progressLabel').textContent = 'Remember a sound';
+  $('progressCount').textContent = (reviewCursor + 1) + ' of ' + reviewQueue.length;
+  $('progressFill').style.width = ((reviewCursor + 1) / (reviewQueue.length + 1) * 100) + '%';
+  $('stageName').textContent = 'Remember a familiar sound';
+  $('title').textContent = 'Let’s remember';
+  $('intro').textContent = 'Look at the picture. Find the letter that starts its name.';
+  $('bigLetter').classList.add('hidden');
+  $('arrow').classList.add('hidden');
+  $('picture').innerHTML = pictureArt(c) + '<small>' + c[1] + '</small>';
+  $('picture').setAttribute('aria-label', 'Picture of ' + c[1]);
+  $('picture').classList.remove('hidden');
+  $('caption').textContent = 'Think, then tap a letter.';
+  $('question').textContent = 'What letter starts this word?';
+  const familiar = curriculum.filter(v => metSounds.has(v[0]) && v[0] !== c[0]);
+  const distractors = familiar.slice(-2).map(v => v[0]);
+  if (distractors.length < 2 && item()[0] !== c[0]) distractors.push(item()[0]);
+  const options = [c[0], ...distractors];
+  options.sort((a, b) => ((a.charCodeAt(0) * 7 + reviewCursor * 5) % 13) - ((b.charCodeAt(0) * 7 + reviewCursor * 5) % 13));
+  $('choices').innerHTML = options.map(x => '<button class="choice" data-value="' + x + '" aria-label="Letter ' + x + '">' + x + '</button>').join('');
+  $('choices').classList.remove('hidden');
+  $('wordBuilder').classList.add('hidden');
+  $('blendPreview').classList.add('hidden');
+  $('playSound').classList.remove('hidden');
+  $('feedback').textContent = '';
+  $('next').classList.add('hidden');
+  $('next').setAttribute('aria-label', reviewCursor + 1 < reviewQueue.length ? 'Next familiar sound' : 'Start a new sound');
+  $('card').classList.remove('hidden');
+  $('done').style.display = 'none';
+  updateMap();
+  playClip('review_prompt');
+}
 function beginSession() {
   clearTimeout(sessionTimer);
   sessionEnded = false;
   sessionTimer = setTimeout(() => { if (!sessionEnded) finish(); }, sessionLength);
+  reviewQueue = chooseSessionReviews();
+  reviewCursor = 0;
+  if (reviewQueue.length) renderReview();
+  else render();
 }
 function answer(btn) {
   if (done) return;
+  if (mode === 'review') {
+    if (btn.dataset.value === reviewQueue[reviewCursor][0]) {
+      done = true;
+      btn.classList.add('good');
+      $('feedback').textContent = '✨';
+      $('next').classList.remove('hidden');
+      $('next').setAttribute('aria-label', reviewCursor + 1 < reviewQueue.length ? 'Next familiar sound' : 'Start a new sound');
+      playSequence(['praise', 'lesson_' + reviewQueue[reviewCursor][0]]);
+    } else {
+      btn.classList.add('retry');
+      $('feedback').textContent = '🔊';
+      playSequence(['try_again', 'lesson_' + reviewQueue[reviewCursor][0]]);
+    }
+    return;
+  }
   if (mode === 'blend-choice') {
     if (btn.dataset.value === targetWord) {
       done = true;
@@ -301,9 +365,10 @@ $('bigLetter').onclick = () => {
   $('bigLetter').classList.remove('pulse'); void $('bigLetter').offsetWidth; $('bigLetter').classList.add('pulse');
   modelPrompt();
 };
-$('picture').onclick = () => hearSound();
+$('picture').onclick = () => mode === 'review' ? playClip('review_prompt') : hearSound();
 $('playSound').onclick = () => {
-  if (mode === 'blend-choice') hearWordBlend(targetWord);
+  if (mode === 'review') playClip('review_prompt');
+  else if (mode === 'blend-choice') hearWordBlend(targetWord);
   else if (mode === 'blend-build') playClip('build_word');
   else if (mode === 'letter') modelPrompt();
   else hearSound();
@@ -316,6 +381,12 @@ $('blendPreview').onclick = e => {
 };
 $('choices').onclick = e => { const b = e.target.closest('.choice'); if (b) answer(b); };
 $('next').onclick = () => {
+  if (mode === 'review' && done) {
+    reviewCursor++;
+    if (reviewCursor < reviewQueue.length) renderReview();
+    else render();
+    return;
+  }
   if (mode === 'letter' && stage === 1) {
     if (soundIndex === 4 && !blendComplete) { startBlend(); return; }
     if (soundIndex === curriculum.length - 1) { finish(); return; }
@@ -335,7 +406,7 @@ $('next').onclick = () => {
     render();
   }
 };
-$('again').onclick = () => { render(); beginSession(); };
+$('again').onclick = () => beginSession();
 $('soundBtn').onclick = () => {
   enabled = !enabled;
   $('soundBtn').textContent = enabled ? '🔊 On' : '🔇 Off';
@@ -364,5 +435,4 @@ document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preven
 document.addEventListener('gesturestart', e => e.preventDefault(), { passive: false });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') $('sheet').classList.remove('open'); });
 beginSession();
-render();
 
