@@ -31,6 +31,7 @@ let stage = 0, tries = 0, enabled = true, done = false, mode = 'letter';
 let selectedTile = null;
 let wordRound = 0, targetWord = firstWords[0];
 let sessionEnded = false, sessionTimer;
+let currentAudio = null;
 const $ = id => document.getElementById(id);
 const item = () => curriculum[soundIndex];
 
@@ -40,32 +41,35 @@ function pictureArt(entry, className = 'lesson-art') {
     : '<span class="' + className + ' emoji-art" aria-hidden="true">' + entry[2] + '</span>';
 }
 
-function say(text) {
-  if (!enabled || !('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
-  const voice = new SpeechSynthesisUtterance(text);
-  voice.lang = 'en-GB';
-  voice.rate = .78;
-  voice.pitch = 1.06;
-  window.speechSynthesis.speak(voice);
+function playClip(name) {
+  playSequence([name]);
+}
+function playSequence(names) {
+  if (!enabled) return;
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+  }
+  const playAt = index => {
+    if (!enabled || index >= names.length) return;
+    currentAudio = new Audio('./assets/voice/' + names[index] + '.mp3');
+    currentAudio.preload = 'auto';
+    currentAudio.onended = () => playAt(index + 1);
+    currentAudio.play().catch(() => {});
+  };
+  playAt(0);
 }
 function hearSound() {
-  // Use a familiar example word where speech synthesis cannot isolate a phoneme cleanly.
-  say(item()[3]);
+  playClip('lesson_' + item()[0]);
 }
-function modelPrompt(instruction = '') {
-  const c = item();
-  say('Listen. ' + c[3] + '. ' + c[1] + '. The first sound in ' + c[1] + ' is ' + c[0] + '. ' + instruction);
+function modelPrompt() {
+  playClip('lesson_' + item()[0]);
 }
 function exampleSound(letter) {
   return curriculum.find(x => x[0] === letter)?.[3] || letter;
 }
-function hearWordBlend(word = targetWord, instruction = '') {
-  const firstSoundModels = word.split('').map(letter => {
-    const example = curriculum.find(x => x[0] === letter)?.[1] || letter;
-    return 'The first sound in ' + example + ' is ' + letter;
-  });
-  say(firstSoundModels.join('. ') + '. Listen to the word: ' + word + '. ' + instruction);
+function hearWordBlend(word = targetWord) {
+  playClip('blend_' + word);
 }
 function markMet(letter) {
   metSounds.add(letter);
@@ -96,7 +100,7 @@ function updateMap() {
     '<section class="map-band"><div><span class="map-kicker">Step 4 · later on</span><h3>Letter pairs & reading</h3><p>When the sounds feel familiar, begin noticing how letters work together.</p></div><div class="map-grid"><span class="map-word map-future">sh</span><span class="map-word map-future">ch</span><span class="map-word map-future">th</span><span class="map-word map-future">vowel teams</span><span class="map-word map-future">read together</span></div></section>';
 }
 function render() {
-  mode = 'letter'; stage = 0; tries = 0; done = false;
+  mode = 'letter'; stage = 1; tries = 0; done = false;
   const c = item();
   $('progressLabel').textContent = 'Sound ' + (soundIndex + 1);
   $('progressCount').textContent = (soundIndex + 1) + ' of ' + curriculum.length;
@@ -109,7 +113,7 @@ function render() {
   $('picture').innerHTML = pictureArt(c) + '<small>' + c[1] + '</small>';
   $('picture').setAttribute('aria-label', 'Hear the word ' + c[1]);
   $('caption').textContent = 'Listen. Look. Tap the letter.';
-  $('question').textContent = 'Listen to the first sound.';
+  $('question').textContent = 'Which letter begins with that sound?';
   const seen = curriculum.slice(0, soundIndex).map(x => x[0]);
   const options = [c[0], ...seen.slice(-2)];
   options.sort((a, b) => ((a.charCodeAt(0) * 7 + soundIndex * 5) % 13) - ((b.charCodeAt(0) * 7 + soundIndex * 5) % 13));
@@ -117,7 +121,7 @@ function render() {
   $('feedback').textContent = '';
   $('next').classList.add('hidden');
   $('next').textContent = 'Keep going';
-  $('choices').classList.add('hidden');
+  $('choices').classList.remove('hidden');
   $('next').textContent = '➜';
   $('next').setAttribute('aria-label', 'Find the letter');
   $('wordBuilder').classList.add('hidden');
@@ -129,7 +133,7 @@ function render() {
   $('card').classList.remove('hidden');
   $('done').style.display = 'none';
   updateMap();
-  modelPrompt('Tap the big letter to hear it again. Then find the letter for its first sound.');
+  modelPrompt();
 }
 function beginSession() {
   clearTimeout(sessionTimer);
@@ -146,11 +150,11 @@ function answer(btn) {
       $('next').textContent = '➜';
       $('next').setAttribute('aria-label', 'Build the word');
       $('next').classList.remove('hidden');
-      hearWordBlend(targetWord, 'Yes. Find the picture for ' + targetWord + '.');
+      hearWordBlend(targetWord);
     } else {
       btn.classList.add('retry');
       $('feedback').textContent = '🔊';
-      hearWordBlend(targetWord, 'Listen again.');
+      playSequence(['try_again', 'blend_' + targetWord]);
     }
     return;
   }
@@ -165,11 +169,11 @@ function answer(btn) {
     const nextLabel = soundIndex === 4 && !blendComplete ? 'Blend the sounds' : soundIndex === curriculum.length - 1 ? 'Finish for today' : 'Next sound';
     $('next').textContent = '➜';
     $('next').setAttribute('aria-label', nextLabel);
-    say('Yes. The first sound in ' + item()[1] + ' is ' + item()[0] + '.');
+    playClip('praise');
   } else {
     btn.classList.add('retry');
     $('feedback').textContent = '🔊';
-    modelPrompt('Try again. Find the letter for that first sound.');
+    playSequence(['try_again', 'lesson_' + item()[0]]);
   }
 }
 function startBlend() {
@@ -200,7 +204,7 @@ function startBlend() {
   $('wordBuilder').classList.add('hidden');
   $('feedback').textContent = '';
   $('next').classList.add('hidden');
-  hearWordBlend(targetWord, 'Find the picture for ' + targetWord + '.');
+  hearWordBlend(targetWord);
 }
 function startWordBuild() {
   mode = 'blend-build'; stage = 4; done = false; selectedTile = null;
@@ -225,7 +229,7 @@ function startWordBuild() {
       $('wordTiles').querySelectorAll('.word-tile').forEach(t => t.style.borderColor = '');
       tile.style.borderColor = '#789b7e';
       const c = curriculum.find(x => x[0] === tile.dataset.letter);
-      say('The first sound in ' + c[1] + ' is ' + c[0] + '.');
+      playClip('lesson_' + c[0]);
     };
     tile.onpointerdown = e => {
       e.currentTarget.setPointerCapture(e.pointerId);
@@ -243,7 +247,7 @@ function startWordBuild() {
   });
   $('feedback').textContent = '';
   $('next').classList.add('hidden');
-  hearWordBlend(targetWord, 'Tap a letter to hear it. Put the first sound in the first space.');
+  playClip('build_word');
 }
 function fillWordSlot(tile, slot) {
   if (tile.disabled || slot.disabled || done) return;
@@ -251,13 +255,13 @@ function fillWordSlot(tile, slot) {
   const nextIndex = [...$('wordSlots').querySelectorAll('.word-slot')].findIndex(s => !s.classList.contains('filled'));
   if (Number(slot.dataset.index) !== nextIndex) {
     $('feedback').textContent = '👈';
-    say('Start with the first sound.');
+    playClip('build_word');
     return;
   }
   if (tile.dataset.letter !== expected) {
     $('feedback').textContent = '🔊';
     const c = curriculum.find(x => x[0] === tile.dataset.letter);
-    say('The first sound in ' + c[1] + ' is ' + c[0] + '.');
+    playClip('lesson_' + c[0]);
     return;
   }
   slot.textContent = tile.dataset.letter;
@@ -273,12 +277,12 @@ function fillWordSlot(tile, slot) {
     $('next').textContent = '➜';
     $('next').setAttribute('aria-label', nextLabel);
     $('next').classList.remove('hidden');
-    say(targetWord);
+    hearWordBlend(targetWord);
   } else {
     const nextSlot = [...$('wordSlots').querySelectorAll('.word-slot')].find(s => !s.classList.contains('filled'));
     if (nextSlot) nextSlot.classList.add('current');
     $('feedback').textContent = '✨';
-    say('Good. Find the next sound.');
+    playClip('next_sound');
   }
 }
 function finish() {
@@ -290,31 +294,25 @@ function finish() {
   $('progressFill').style.width = ((soundIndex + 1) / curriculum.length * 100) + '%';
   $('progressCount').textContent = (soundIndex + 1) + ' of ' + curriculum.length;
   $('progressLabel').textContent = 'Lovely listening';
-  say('Lovely listening. You learned a new sound.');
+  playClip('all_done');
 }
 
 $('bigLetter').onclick = () => {
   $('bigLetter').classList.remove('pulse'); void $('bigLetter').offsetWidth; $('bigLetter').classList.add('pulse');
-  if (mode === 'letter' && stage === 0) {
-    stage = 1;
-    $('choices').classList.remove('hidden');
-    modelPrompt('Now find the letter that says ' + item()[3] + '.');
-    return;
-  }
-  modelPrompt('Listen for the first sound.');
+  modelPrompt();
 };
-$('picture').onclick = () => say(item()[1]);
+$('picture').onclick = () => hearSound();
 $('playSound').onclick = () => {
-  if (mode === 'blend-choice') hearWordBlend(targetWord, 'Find the picture for ' + targetWord + '.');
-  else if (mode === 'blend-build') hearWordBlend(targetWord, 'Tap a letter to hear it. Put the first sound in the first space.');
-  else if (mode === 'letter') modelPrompt('Tap the big letter to hear it again. Find the letter for its first sound.');
+  if (mode === 'blend-choice') hearWordBlend(targetWord);
+  else if (mode === 'blend-build') playClip('build_word');
+  else if (mode === 'letter') modelPrompt();
   else hearSound();
 };
 $('blendPreview').onclick = e => {
   const b = e.target.closest('.blend-sound');
   if (!b) return;
   const c = curriculum.find(x => x[0] === b.textContent);
-  say(c ? 'The first sound in ' + c[1] + ' is ' + c[0] : b.dataset.sound);
+  if (c) playClip('lesson_' + c[0]);
 };
 $('choices').onclick = e => { const b = e.target.closest('.choice'); if (b) answer(b); };
 $('next').onclick = () => {
@@ -342,7 +340,10 @@ $('soundBtn').onclick = () => {
   enabled = !enabled;
   $('soundBtn').textContent = enabled ? '🔊 On' : '🔇 Off';
   $('soundBtn').setAttribute('aria-label', enabled ? 'Turn sound off' : 'Turn sound on');
-  if (!enabled && 'speechSynthesis' in window) window.speechSynthesis.cancel();
+  if (!enabled && currentAudio) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+  }
 };
 $('closeSheet').onclick = () => $('sheet').classList.remove('open');
 $('sheet').onclick = e => { if (e.target === $('sheet')) $('sheet').classList.remove('open'); };

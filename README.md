@@ -6,7 +6,7 @@ A small, touch-friendly, audio-led phonics app for early sound and letter explor
 
 ## How it works
 
-The app runs as static HTML, CSS, and JavaScript from the `dist` folder. It uses the browser’s built-in speech synthesis and saves progress in the browser on the device.
+The app runs as static HTML, CSS, JavaScript, and bundled audio from the `dist` folder. Spoken lesson prompts use pre-generated recordings, so the app does not make live voice-service calls or need an API key. Progress stays in the browser on the device.
 
 Each play session ends after 2½ minutes with an “All done!” screen. To open the grown-up view, press and hold the flower beside the Sound Steps name. It shows sounds met, sounds to revisit, the next sound, and the learning path. Progress is stored in this browser on this device.
 
