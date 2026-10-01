@@ -61,7 +61,7 @@ let sessionId = 0;
 let nextLevelAfterReview = false;
 const $ = id => document.getElementById(id);
 const item = () => curriculum[soundIndex];
-const praiseClips = ['praise_great_job', 'praise_great_listening', 'praise_you_got_it', 'praise_well_done'];
+const praiseClips = ['praise_great_job', 'praise_great_listening', 'praise_you_got_it', 'praise_well_done', 'praise_fantastic', 'praise_you_did_it', 'praise_lovely_work', 'praise_brilliant_listening', 'praise_nice_one', 'praise_you_heard_it', 'praise_good_listener', 'praise_spot_on', 'praise_hooray', 'praise_clever', 'praise_wonderful', 'praise_you_found_it'];
 let lastPraiseClip = localStorage.getItem('soundStepsLastPraise') || '';
 
 function nextPraiseClip() {
