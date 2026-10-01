@@ -50,7 +50,8 @@ const blendWords = [
 const storedMastery = JSON.parse(localStorage.getItem(masteryKey) || '{}');
 let metSounds = new Set(JSON.parse(localStorage.getItem(metKey) || '[]'));
 let soundIndex = 0;
-let sessionLength = Number(localStorage.getItem(sessionLengthKey) || 2.5) * 60000;
+const storedSessionMinutes = localStorage.getItem(sessionLengthKey);
+let sessionLength = storedSessionMinutes === null ? 0 : Number(storedSessionMinutes) * 60000;
 let stage = 0, tries = 0, enabled = true, done = false, mode = 'letter';
 let selectedTile = null;
 let targetWord = null;
@@ -83,7 +84,7 @@ function findCurrentLevel() {
   return next < 0 ? 0 : next;
 }
 soundIndex = findCurrentLevel();
-if (!Number.isFinite(sessionLength) || sessionLength < 60000 || sessionLength > 600000) sessionLength = 150000;
+if (!Number.isFinite(sessionLength) || sessionLength < 0 || sessionLength > 600000) sessionLength = 0;
 localStorage.setItem(masteryKey, JSON.stringify(storedMastery));
 localStorage.setItem(progressKey, String(soundIndex));
 
@@ -252,7 +253,8 @@ function beginSession() {
   sessionEnded = false;
   sessionId = Number(localStorage.getItem(sessionNumberKey) || 0) + 1;
   localStorage.setItem(sessionNumberKey, String(sessionId));
-  sessionTimer = setTimeout(() => { if (!sessionEnded) finish(); }, sessionLength);
+  $('finishSession').classList.remove('hidden');
+  if (sessionLength > 0) sessionTimer = setTimeout(() => { if (!sessionEnded) finish(); }, sessionLength);
   reviewQueue = chooseSessionReviews();
   reviewCursor = 0;
   nextLevelAfterReview = false;
@@ -453,6 +455,8 @@ function finish() {
   if (sessionEnded) return;
   sessionEnded = true;
   clearTimeout(sessionTimer);
+  $('finishSession').classList.add('hidden');
+  $('sheet').classList.remove('open');
   soundIndex = findCurrentLevel();
   localStorage.setItem(progressKey, String(soundIndex));
   updateMap();
@@ -555,7 +559,7 @@ async function importProgress(file) {
   metSounds = new Set([...metSounds, ...incomingMet, ...Object.keys(backup.mastery)]);
   localStorage.setItem(masteryKey, JSON.stringify(storedMastery));
   localStorage.setItem(metKey, JSON.stringify([...metSounds]));
-  if ([1, 1.5, 2, 2.5, 3, 4, 5].includes(backup.sessionMinutes)) {
+  if ([0, 1, 1.5, 2, 2.5, 3, 4, 5].includes(backup.sessionMinutes)) {
     sessionLength = backup.sessionMinutes * 60000;
     localStorage.setItem(sessionLengthKey, String(backup.sessionMinutes));
   }
@@ -581,10 +585,11 @@ $('progressFile').onchange = async e => {
 };
 
 $('startButton').onclick = () => beginSession();
+$('finishSession').onclick = finish;
 $('sessionMinutes').value = String(sessionLength / 60000);
 $('sessionMinutes').onchange = e => {
   const minutes = Number(e.target.value);
-  if (![1, 1.5, 2, 2.5, 3, 4, 5].includes(minutes)) return;
+  if (![0, 1, 1.5, 2, 2.5, 3, 4, 5].includes(minutes)) return;
   sessionLength = minutes * 60000;
   localStorage.setItem(sessionLengthKey, String(minutes));
 };
