@@ -61,6 +61,16 @@ let sessionId = 0;
 let nextLevelAfterReview = false;
 const $ = id => document.getElementById(id);
 const item = () => curriculum[soundIndex];
+const praiseClips = ['praise_great_job', 'praise_great_listening', 'praise_you_got_it', 'praise_well_done'];
+let lastPraiseClip = localStorage.getItem('soundStepsLastPraise') || '';
+
+function nextPraiseClip() {
+  const choices = praiseClips.filter(clip => clip !== lastPraiseClip);
+  lastPraiseClip = choices[Math.floor(Math.random() * choices.length)];
+  localStorage.setItem('soundStepsLastPraise', lastPraiseClip);
+  return lastPraiseClip;
+}
+
 
 if (!Object.keys(storedMastery).length && metSounds.size) {
   for (const letter of metSounds) storedMastery[letter] = { sessions: ['legacy'] };
@@ -258,7 +268,7 @@ function answer(btn) {
       $('feedback').textContent = '✨';
       $('next').classList.remove('hidden');
       $('next').setAttribute('aria-label', reviewCursor + 1 < reviewQueue.length ? 'Next familiar sound' : 'Blend some sounds');
-      playSequence(['praise', 'sound_' + reviewQueue[reviewCursor][0]]);
+      playSequence([nextPraiseClip(), 'sound_' + reviewQueue[reviewCursor][0]]);
     } else {
       btn.classList.add('retry');
       $('feedback').textContent = '🔊';
@@ -303,7 +313,7 @@ function answer(btn) {
     $('next').textContent = '➜';
     $('next').setAttribute('aria-label', isMastered(letter) ? 'Meet the next sound' : 'Keep practicing this sound');
     updateMap();
-    playSequence(['praise', 'sound_' + item()[0]]);
+    playSequence([nextPraiseClip(), 'sound_' + item()[0]]);
   } else {
     btn.classList.add('retry');
     $('feedback').textContent = '🔊';
