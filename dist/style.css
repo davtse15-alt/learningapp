@@ -25,6 +25,7 @@ main { max-width: 1120px; padding-left: clamp(18px, 4vw, 48px); padding-right: c
 .parent-gesture {
   appearance: none; border: 0; background: transparent; padding: 0;
   cursor: default; touch-action: none; user-select: none;
+  -webkit-user-select: none; -webkit-touch-callout: none;
 }
 .parent-hint { display: none; }
 .brand-word { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
@@ -210,6 +211,7 @@ main { max-width: 1120px; padding-left: clamp(18px, 4vw, 48px); padding-right: c
 .start-card { position: relative; display: grid; justify-items: center; gap: 16px; width: min(100%, 560px); padding: clamp(28px, 7vw, 58px) 22px; border: 1px solid #e4e8df; border-radius: 34px; background: #fffefa; text-align: center; box-shadow: 0 24px 65px #29445416; }
 .start-sun { font-size: clamp(50px, 11vw, 72px); }
 .start-flower { position: absolute; top: 18px; right: 22px; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: #e6f1e7; color: #4f806f; font-size: 22px; }
+button.start-flower { border: 0; padding: 0; cursor: default; touch-action: none; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 .start-card h1 { margin: 0; color: #26394a; font: 700 clamp(29px, 6vw, 40px) Georgia, serif; letter-spacing: -.035em; }
 .start-card p { max-width: 300px; margin: 0; color: #667684; font-size: 15px; line-height: 1.45; }
 .start-button { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 76px; margin-top: 8px; padding: 14px 27px; border: 0; border-radius: 24px; background: #315a70; color: #fffefa; box-shadow: 0 6px 0 #234254; font-size: 24px; font-weight: 900; cursor: pointer; touch-action: manipulation; }

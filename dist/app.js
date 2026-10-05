@@ -605,18 +605,22 @@ $('soundBtn').onclick = () => {
 $('closeSheet').onclick = () => $('sheet').classList.remove('open');
 $('sheet').onclick = e => { if (e.target === $('sheet')) $('sheet').classList.remove('open'); };
 let holdTimer, holdOpened = false;
-const parentButton = $('parentGesture');
-parentButton.onpointerdown = e => {
-  e.preventDefault(); holdOpened = false;
-  holdTimer = setTimeout(() => {
-    holdOpened = true;
-    updateMap();
-    $('sheet').classList.add('open');
-    if (navigator.vibrate) navigator.vibrate(25);
-  }, 1100);
-};
-['pointerup', 'pointercancel', 'pointerleave'].forEach(type => parentButton.addEventListener(type, () => clearTimeout(holdTimer)));
-parentButton.oncontextmenu = e => e.preventDefault();
+function attachParentHold(el) {
+  if (!el) return;
+  el.onpointerdown = e => {
+    e.preventDefault(); holdOpened = false;
+    holdTimer = setTimeout(() => {
+      holdOpened = true;
+      updateMap();
+      $('sheet').classList.add('open');
+      if (navigator.vibrate) navigator.vibrate(25);
+    }, 1100);
+  };
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(type => el.addEventListener(type, () => clearTimeout(holdTimer)));
+  el.oncontextmenu = e => e.preventDefault();
+}
+attachParentHold($('parentGesture'));
+attachParentHold($('startParentGesture'));
 document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
 document.addEventListener('gesturestart', e => e.preventDefault(), { passive: false });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') $('sheet').classList.remove('open'); });
