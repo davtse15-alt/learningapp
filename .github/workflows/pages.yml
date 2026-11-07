@@ -3,6 +3,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+
+# Queue Pages deploys so rapid commits cannot collide at the deployment API.
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
 permissions:
   contents: read
 jobs:
