@@ -387,7 +387,7 @@ function startWordBuild() {
   $('stageName').textContent = 'Build the word';
   $('title').textContent = 'Build it';
   $('intro').textContent = 'Put each sound in its place.';
-  $('caption').textContent = 'Tap a letter, then the next space.';
+  $('caption').textContent = 'Tap F, then A, then N to build the word.';
   $('question').textContent = 'Listen, then build.';
   $('choices').classList.add('hidden');
   $('wordBuilder').classList.remove('hidden');
@@ -458,9 +458,14 @@ function fillWordSlot(tile, slot) {
   if ($('wordSlots').querySelectorAll('.word-slot.filled').length === targetWord.tiles.length) {
     done = true; mode = 'blend-complete';
     $('feedback').textContent = '🎉';
-    $('next').textContent = '➜';
-    $('next').setAttribute('aria-label', 'Keep playing');
+    $('next').textContent = 'Next word  ➜';
+    $('next').setAttribute('aria-label', 'Next word');
     $('next').classList.remove('hidden');
+    $('next').style.display = 'inline-flex';
+    $('next').style.visibility = 'visible';
+    $('next').style.position = 'relative';
+    $('next').style.zIndex = '5';
+    requestAnimationFrame(() => $('next').scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
     hearWordBlend();
   } else {
     const nextSlot = [...$('wordSlots').querySelectorAll('.word-slot')].find(s => !s.classList.contains('filled'));
