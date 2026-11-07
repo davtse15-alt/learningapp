@@ -281,3 +281,21 @@ button.start-flower { border: 0; padding: 0; cursor: default; touch-action: none
 }
 .level-flow{display:grid;gap:8px;margin:12px 0 22px}.level-flow>div{display:grid;grid-template-columns:32px 1fr;align-items:start;gap:10px;padding:11px 13px;background:#f5f1e8;border:1px solid #ebe4d8;border-radius:15px}.level-flow>div>b{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#55765d;color:#fff}.level-flow p{display:grid;gap:3px;margin:0;color:#34413b;font-size:14px}.level-flow span{color:#667684;font-size:12px;line-height:1.4}
 .backup-box{display:grid;gap:10px;margin:22px 0;padding:16px;border:1px solid #e1e8e2;border-radius:18px;background:#f5f8f2}.backup-box h3{margin:0 0 4px;color:#34413b;font-size:16px}.backup-box p{margin:0;color:#667684;font-size:12px;line-height:1.45}.backup-actions{display:flex;flex-wrap:wrap;gap:8px}.backup-actions .quiet{min-height:44px}.backup-status{min-height:0;color:#55765d!important;font-weight:750}
+
+/* Touch-first word building: tap a letter to fill the next sound slot. */
+.word-builder { gap: clamp(16px, 3vh, 26px); }
+.word-tiles, .word-slots { gap: clamp(10px, 2vw, 18px); }
+.word-tile {
+  width: clamp(78px, 15vw, 108px); height: clamp(78px, 15vw, 108px);
+  border-radius: 24px; font-size: clamp(48px, 8vw, 64px);
+  cursor: pointer; touch-action: manipulation;
+}
+.word-slot {
+  width: clamp(82px, 16vw, 112px); height: clamp(82px, 16vw, 112px);
+  border-radius: 24px; font-size: clamp(48px, 8vw, 64px);
+}
+.word-tile:disabled { cursor: default; }
+@media (max-width: 620px) {
+  .word-tile { width: 76px; height: 76px; font-size: 48px; }
+  .word-slot { flex: 0 0 78px; width: 78px; height: 78px; font-size: 48px; }
+}
