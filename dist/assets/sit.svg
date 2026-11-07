@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<rect width="512" height="512" rx="64" fill="#f4ead8"/>
+<!-- chair -->
+<path d="M330 176h94v210h-94z" fill="#d89b65" stroke="#9b694b" stroke-width="10" stroke-linejoin="round"/>
+<path d="M315 169h124v28H315z" fill="#e5ad76" stroke="#9b694b" stroke-width="10"/>
+<path d="M344 384v82m67-82v82" fill="none" stroke="#9b694b" stroke-width="15" stroke-linecap="round"/>
+<!-- child's head and hair -->
+<circle cx="214" cy="120" r="58" fill="#e5ad76" stroke="#9b694b" stroke-width="10"/>
+<path d="M159 115q-1-65 57-68 50-2 57 48-43-24-114 20" fill="#8b6048"/>
+<circle cx="195" cy="128" r="6" fill="#3c4541"/><circle cx="234" cy="128" r="6" fill="#3c4541"/>
+<path d="M203 150q11 9 23 0" fill="none" stroke="#9b694b" stroke-width="6" stroke-linecap="round"/>
+<!-- body seated on chair -->
+<path d="M169 204q45-29 91 0l38 120H145z" fill="#79b6a5" stroke="#477f76" stroke-width="10" stroke-linejoin="round"/>
+<!-- arms resting by sides -->
+<path d="M169 228 139 295m119-67 39 57" fill="none" stroke="#e5ad76" stroke-width="22" stroke-linecap="round"/>
+<!-- bottom clearly resting on the seat -->
+<path d="M164 316q0 30 35 37h116q22-4 23-27l-10-19h-91l-17-15z" fill="#e5ad76" stroke="#9b694b" stroke-width="10" stroke-linejoin="round"/>
+<!-- bent legs and feet -->
+<path d="M193 350q-17 28 5 53l54 20q22 8 32-12 9-20-14-31l-34-18" fill="#e5ad76" stroke="#9b694b" stroke-width="10" stroke-linejoin="round"/>
+<path d="M282 356q4 29 34 39l47 0q22-2 20-21-2-17-23-19l-45-10" fill="#d89b65" stroke="#9b694b" stroke-width="10" stroke-linejoin="round"/>
+<path d="M90 466h350" fill="none" stroke="#9b694b" stroke-width="10" stroke-linecap="round"/>
+</svg>
