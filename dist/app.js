@@ -21,8 +21,8 @@ const sessionLengthKey = 'soundStepsSessionMinutes';
 const blendOffsetKey = 'soundStepsBlendOffset';
 const blendWords = [
   { word:'mat', tiles:['m','a','t'], sounds:['m','a','t'], picture:'assets/mat.jpg', emoji:'🧘' },
-  { word:'sat', tiles:['s','a','t'], sounds:['s','a','t'], picture:'assets/sat.jpg', emoji:'🪑' },
-  { word:'fat', tiles:['f','a','t'], sounds:['f','a','t'], emoji:'🐘' },
+  { word:'sat', tiles:['s','a','t'], sounds:['s','a','t'], picture:'assets/sat.svg', emoji:'🪑' },
+  { word:'fat', tiles:['f','a','t'], sounds:['f','a','t'], picture:'assets/fat.svg', emoji:'🐈' },
   { word:'fan', tiles:['f','a','n'], sounds:['f','a','n'], emoji:'🪭' },
   { word:'sit', tiles:['s','i','t'], sounds:['s','i','t'], emoji:'🪑' },
   { word:'tap', tiles:['t','a','p'], sounds:['t','a','p'], emoji:'🚰' },
@@ -57,6 +57,7 @@ let selectedTile = null;
 let targetWord = null;
 let sessionEnded = false, sessionTimer;
 let currentAudio = null;
+let audioSequenceId = 0;
 let reviewQueue = [], reviewCursor = 0;
 let sessionId = 0;
 let nextLevelAfterReview = false;
@@ -96,19 +97,32 @@ function playClip(name) {
   playSequence([name]);
 }
 function playSequence(names) {
+  const sequenceId = ++audioSequenceId;
   if (!enabled) return;
   if (currentAudio) {
+    currentAudio.onended = null;
+    currentAudio.onerror = null;
     currentAudio.pause();
     currentAudio.currentTime = 0;
   }
   const playAt = index => {
-    if (!enabled || index >= names.length) return;
-    currentAudio = new Audio('./assets/voice/' + names[index] + '.mp3');
-    currentAudio.preload = 'auto';
-    currentAudio.onended = () => playAt(index + 1);
-    // If a clip fails to load, skip it instead of stalling the whole chain.
-    currentAudio.onerror = () => playAt(index + 1);
-    currentAudio.play().catch(() => {});
+    if (!enabled || sequenceId !== audioSequenceId || index >= names.length) return;
+    const audio = new Audio('./assets/voice/' + names[index] + '.mp3');
+    currentAudio = audio;
+    audio.preload = 'auto';
+    let advanced = false;
+    let fallbackTimer;
+    const advance = () => {
+      if (advanced) return;
+      advanced = true;
+      clearTimeout(fallbackTimer);
+      if (sequenceId === audioSequenceId) playAt(index + 1);
+    };
+    audio.onended = advance;
+    audio.onerror = advance;
+    // A missing, stalled, or rejected clip must never block the lesson.
+    fallbackTimer = setTimeout(advance, 5000);
+    audio.play().catch(advance);
   };
   playAt(0);
 }
@@ -380,8 +394,8 @@ function startWordBuild() {
   $('wordBuilderArt').innerHTML = targetWord.picture
     ? '<img src="./' + targetWord.picture + '" alt="" aria-hidden="true">'
     : '<span>' + targetWord.emoji + '</span>';
-  $('wordTiles').innerHTML = [...targetWord.tiles].reverse().map((tile, i) => {
-    const sound = targetWord.sounds[targetWord.tiles.length - 1 - i];
+  $('wordTiles').innerHTML = targetWord.tiles.map((tile, i) => {
+    const sound = targetWord.sounds[i];
     return '<button class="word-tile" data-grapheme="' + tile + '" data-sound="' + sound + '" aria-label="Hear a sound">' + tile + '</button>';
   }).join('');
   $('wordSlots').querySelectorAll('.word-slot').forEach(slot => {
@@ -394,10 +408,12 @@ function startWordBuild() {
     '<button class="word-slot" data-index="' + i + '" aria-label="Sound ' + (i + 1) + '"></button>').join('');
   $('wordTiles').querySelectorAll('.word-tile').forEach(tile => {
     tile.onclick = () => {
+      if (tile.disabled || done) return;
       selectedTile = tile;
       $('wordTiles').querySelectorAll('.word-tile').forEach(t => t.style.borderColor = '');
       tile.style.borderColor = '#789b7e';
-      playClip('sound_' + tile.dataset.sound);
+      const nextSlot = [...$('wordSlots').querySelectorAll('.word-slot')].find(slot => !slot.classList.contains('filled'));
+      if (nextSlot) fillWordSlot(tile, nextSlot);
     };
     tile.onpointerdown = e => {
       e.currentTarget.setPointerCapture(e.pointerId);
@@ -427,6 +443,8 @@ function fillWordSlot(tile, slot) {
     return;
   }
   if (tile.dataset.grapheme !== expected) {
+    selectedTile = null;
+    tile.style.borderColor = '';
     $('feedback').textContent = '🔊';
     playClip('sound_' + tile.dataset.sound);
     return;
