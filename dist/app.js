@@ -24,7 +24,7 @@ const blendWords = [
   { word:'sat', tiles:['s','a','t'], sounds:['s','a','t'], picture:'assets/sat.svg', emoji:'🪑' },
   { word:'fat', tiles:['f','a','t'], sounds:['f','a','t'], picture:'assets/fat.svg', emoji:'🐈' },
   { word:'fan', tiles:['f','a','n'], sounds:['f','a','n'], picture:'assets/fan.svg', emoji:'🪭' },
-  { word:'sit', tiles:['s','i','t'], sounds:['s','i','t'], emoji:'🪑' },
+  { word:'sit', tiles:['s','i','t'], sounds:['s','i','t'], picture:'assets/sit.svg', emoji:'🪑' },
   { word:'tap', tiles:['t','a','p'], sounds:['t','a','p'], emoji:'🚰' },
   { word:'rat', tiles:['r','a','t'], sounds:['r','a','t'], emoji:'🐀' },
   { word:'net', tiles:['n','e','t'], sounds:['n','e','t'], emoji:'🥅' },
