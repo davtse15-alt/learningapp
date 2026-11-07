@@ -1,1 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="64" fill="#eaf1f3"/><path d="M327 216h92v186h-92z" fill="#c88b5e" stroke="#8c6046" stroke-width="10"/><path d="M312 205h122v25H312z" fill="#dca16f" stroke="#8c6046" stroke-width="9"/><path d="M337 394v77m72-77v77" stroke="#8c6046" stroke-width="15" stroke-linecap="round"/><circle cx="221" cy="132" r="58" fill="#d99b72" stroke="#9b694b" stroke-width="9"/><path d="M164 124q5-75 77-69 42 4 45 48-42-27-122 21" fill="#604b43"/><circle cx="202" cy="137" r="6" fill="#3c4541"/><circle cx="242" cy="137" r="6" fill="#3c4541"/><path d="M183 202q37-29 76 0l26 116h-125z" fill="#78a8a0" stroke="#4e7d77" stroke-width="10"/><path d="M187 292q-23 37 15 66l83 1q24-4 30-29l-18-25-59 16-26-38" fill="#d99b72" stroke="#9b694b" stroke-width="10"/><path d="M198 351q-19 33 8 54h86q23-7 8-28l-49-16" fill="#e5b27d" stroke="#9b694b" stroke-width="10"/><path d="M175 222 132 292m132-72 49 63" stroke="#d99b72" stroke-width="22" stroke-linecap="round"/><path d="M90 471h342" stroke="#8caa9b" stroke-width="10" stroke-linecap="round"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<rect width="512" height="512" rx="64" fill="#f4ead8"/>
+<!-- simple wooden chair -->
+<path d="M337 185h92v202h-92z" fill="#d89b65" stroke="#9b694b" stroke-width="10" stroke-linejoin="round"/>
+<path d="M322 178h122v27H322z" fill="#e5ad76" stroke="#9b694b" stroke-width="10" stroke-linejoin="round"/>
+<path d="M350 387v75m67-75v75" fill="none" stroke="#9b694b" stroke-width="14" stroke-linecap="round"/>
+<!-- seated child, kept deliberately simple and friendly -->
+<circle cx="215" cy="125" r="58" fill="#e5ad76" stroke="#9b694b" stroke-width="10"/>
+<path d="M160 119q-2-63 55-66 51-2 58 49-43-25-113 17" fill="#8b6048"/>
+<circle cx="196" cy="132" r="6" fill="#3c4541"/>
+<circle cx="235" cy="132" r="6" fill="#3c4541"/>
+<path d="M203 155q12 10 24 0" fill="none" stroke="#9b694b" stroke-width="6" stroke-linecap="round"/>
+<path d="M170 211q45-30 91 0l29 113H151z" fill="#79b6a5" stroke="#477f76" stroke-width="10" stroke-linejoin="round"/>
+<!-- arms resting on lap -->
+<path d="M174 233 145 300q-7 19 13 26l77 23" fill="none" stroke="#e5ad76" stroke-width="23" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M257 235 291 293q11 18 30 7l25-18" fill="none" stroke="#e5ad76" stroke-width="23" stroke-linecap="round" stroke-linejoin="round"/>
+<!-- seated legs -->
+<path d="M177 320q-13 45 29 64l94 0q24-3 20-26l-6-20-90-4" fill="#e5ad76" stroke="#9b694b" stroke-width="10" stroke-linejoin="round"/>
+<path d="M221 375q-28 20-19 50 5 17 27 17h78q19 0 18-18-1-17-23-20l-42-8" fill="#d89b65" stroke="#9b694b" stroke-width="10" stroke-linejoin="round"/>
+<path d="M91 463h345" fill="none" stroke="#9b694b" stroke-width="10" stroke-linecap="round"/>
+</svg>
