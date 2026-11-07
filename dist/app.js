@@ -373,7 +373,7 @@ function startBlend() {
   const choices = [targetWord, ...distractors];
   $('choices').innerHTML = choices.map(word =>
     '<button class="choice word-choice picture-choice" data-value="' + word.word + '" aria-label="Picture choice"><span class="blend-picture">' +
-    (word.picture ? '<img src="./' + word.picture + '" alt="" aria-hidden="true">' : word.emoji) + '</span></button>').join('');
+    (word.picture ? '<img src="./' + word.picture + '" alt="" aria-hidden="true" onerror="this.parentElement.textContent=\'' + word.emoji + '\'">' : word.emoji) + '</span></button>').join('');
   $('blendPreview').innerHTML = targetWord.tiles.map((tile, i) =>
     '<button class="blend-sound" data-sound="' + targetWord.sounds[i] + '" aria-label="Hear a sound">' + tile + '</button>').join('');
   $('choices').classList.remove('hidden');
@@ -392,7 +392,7 @@ function startWordBuild() {
   $('choices').classList.add('hidden');
   $('wordBuilder').classList.remove('hidden');
   $('wordBuilderArt').innerHTML = targetWord.picture
-    ? '<img src="./' + targetWord.picture + '" alt="" aria-hidden="true">'
+    ? '<img src="./' + targetWord.picture + '" alt="" aria-hidden="true" onerror="this.replaceWith(document.createTextNode(\'' + targetWord.emoji + '\'))">'
     : '<span>' + targetWord.emoji + '</span>';
   $('wordTiles').innerHTML = targetWord.tiles.map((tile, i) => {
     const sound = targetWord.sounds[i];
