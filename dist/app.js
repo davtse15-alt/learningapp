@@ -84,7 +84,18 @@ function findCurrentLevel() {
   const next = curriculum.findIndex(x => !isMastered(x[0]));
   return next < 0 ? 0 : next;
 }
-soundIndex = findCurrentLevel();
+function findNextLevel(fromIndex = soundIndex) {
+  for (let offset = 1; offset <= curriculum.length; offset++) {
+    const idx = (fromIndex + offset) % curriculum.length;
+    if (!isMastered(curriculum[idx][0])) return idx;
+  }
+  return (fromIndex + 1) % curriculum.length;
+}
+const savedIndexRaw = localStorage.getItem(progressKey);
+const savedIndex = savedIndexRaw === null ? NaN : Number(savedIndexRaw);
+soundIndex = Number.isInteger(savedIndex) && savedIndex >= 0 && savedIndex < curriculum.length
+  ? savedIndex
+  : findCurrentLevel();
 if (!Number.isFinite(sessionLength) || sessionLength < 0 || sessionLength > 600000) sessionLength = 0;
 localStorage.setItem(masteryKey, JSON.stringify(storedMastery));
 localStorage.setItem(progressKey, String(soundIndex));
@@ -153,24 +164,38 @@ function updateMap() {
   const evidence = storedMastery[item()[0]]?.sessions?.length || 0;
   const soundCard = (v, i) => {
     const mastered = isMastered(v[0]);
-    const state = mastered ? 'done' : i === soundIndex ? 'here' : '';
-    return '<div class="map-item ' + state + '"><span class="map-letter">' +
+    const state = [mastered ? 'done' : '', i === soundIndex ? 'here' : ''].filter(Boolean).join(' ');
+    return '<button type="button" class="map-item ' + state + '" data-lesson-index="' + i +
+      '" aria-label="Jump to level ' + (i + 1) + ', ' + v[0] + ' for ' + v[1] + '"><span class="map-letter">' +
       (mastered ? '✓' : v[0]) + '</span><b>' + v[1] + '</b>' +
-      (!mastered && metSounds.has(v[0]) ? '<small>' + (storedMastery[v[0]]?.sessions?.length || 0) + ' of 3</small>' : '') + '</div>';
+      (!mastered && metSounds.has(v[0]) ? '<small>' + (storedMastery[v[0]]?.sessions?.length || 0) + ' of 3</small>' : '') + '</button>';
   };
   const revisitCards = seen.length
-    ? seen.map(v => '<div class="parent-sound"><b>' + v[0] + '</b><span>' + v[1] + '</span><small>' + (isMastered(v[0]) ? 'Met' : (storedMastery[v[0]]?.sessions?.length || 0) + ' of 3') + '</small></div>').join('')
+    ? seen.map(v => {
+        const idx = curriculum.findIndex(x => x[0] === v[0]);
+        return '<button type="button" class="parent-sound" data-lesson-index="' + idx +
+          '" aria-label="Jump to level ' + (idx + 1) + ', ' + v[0] + ' for ' + v[1] + '"><b>' +
+          v[0] + '</b><span>' + v[1] + '</span><small>' +
+          (isMastered(v[0]) ? 'Met' : (storedMastery[v[0]]?.sessions?.length || 0) + ' of 3') + '</small></button>';
+      }).join('')
     : '<p class="parent-empty">Sounds met during lessons will appear here.</p>';
   $('parentSummary').innerHTML =
     '<div class="summary-stats"><div><b>' + masteredCount + '</b><span>sounds mastered</span></div><div><b>' + evidence + ' / 3</b><span>correct answers on ' + item()[0] + '</span></div></div>' +
     '<div class="revisit-block"><h3>Sounds to revisit</h3><div class="parent-sound-list">' + revisitCards + '</div></div>' +
     '<p class="up-next">Current level: <b>' + (soundIndex + 1) + ' · ' + item()[0] + ' · ' + item()[1] + '</b></p>';
+  const lessonSelect = $('lessonSelect');
+  if (lessonSelect) {
+    lessonSelect.innerHTML = curriculum.map((v, i) =>
+      '<option value="' + i + '">Level ' + (i + 1) + ' · ' + v[0] + ' — ' + v[1] + (isMastered(v[0]) ? ' ✓' : '') + '</option>'
+    ).join('');
+    lessonSelect.value = String(soundIndex);
+  }
   $('map').innerHTML =
     '<section class="map-band"><div><span class="map-kicker">Step 1 · hear and notice</span><h3>First sounds</h3><p>Listen for a sound, then find its letter.</p></div><div class="map-grid">' +
     curriculum.slice(0, 5).map((v, i) => soundCard(v, i)).join('') +
     '</div></section>' +
     '<section class="map-band"><div><span class="map-kicker">Every level · blend and build</span><h3>Put sounds together</h3><p>As soon as enough sounds are known, blend and build words from the growing sound set.</p></div><div class="map-grid">' +
-    blendWords.filter(w => w.sounds.every(letter => curriculum.findIndex(x => x[0] === letter) <= soundIndex)).map(w => '<span class="map-word">' + w.tiles.join(' · ') + '</span>').join('') + '</div></section>' +
+    blendWords.filter(w => w.sounds.every(letter => curriculum.findIndex(x => x[0] === letter) <= soundIndex)).map(w => '<button type="button" class="map-word" data-blend-word="' + w.word + '" aria-label="Practice blending ' + w.word + '">' + w.tiles.join(' · ') + '</button>').join('') + '</div></section>' +
     '<section class="map-band"><div><span class="map-kicker">Step 3 · keep exploring</span><h3>More letter sounds</h3><p>Meet a few at a time and revisit familiar sounds.</p></div><div class="map-grid">' +
     curriculum.slice(5).map((v, i) => soundCard(v, i + 5)).join('') +
     '</div></section>' +
@@ -275,6 +300,38 @@ function beginSession() {
   $('startGate').classList.add('hidden');
   render();
 }
+function ensureSessionActive() {
+  if (!$('startGate').classList.contains('hidden') || sessionEnded) {
+    clearTimeout(sessionTimer);
+    sessionEnded = false;
+    sessionId = Number(localStorage.getItem(sessionNumberKey) || 0) + 1;
+    localStorage.setItem(sessionNumberKey, String(sessionId));
+    $('finishSession').classList.remove('hidden');
+    if (sessionLength > 0) sessionTimer = setTimeout(() => { if (!sessionEnded) finish(); }, sessionLength);
+    $('startGate').classList.add('hidden');
+  }
+}
+function jumpToLesson(targetIndex) {
+  if (!Number.isInteger(targetIndex) || targetIndex < 0 || targetIndex >= curriculum.length) return;
+  soundIndex = targetIndex;
+  localStorage.setItem(progressKey, String(soundIndex));
+  reviewQueue = chooseSessionReviews();
+  reviewCursor = 0;
+  nextLevelAfterReview = false;
+  targetWord = null;
+  selectedTile = null;
+  ensureSessionActive();
+  $('sheet').classList.remove('open');
+  render(true);
+}
+function jumpToBlendWord(wordStr) {
+  const wordObj = blendWords.find(w => w.word === wordStr);
+  if (!wordObj) return;
+  selectedTile = null;
+  ensureSessionActive();
+  $('sheet').classList.remove('open');
+  startBlend(wordObj);
+}
 function answer(btn) {
   if (done) return;
   if (mode === 'review') {
@@ -349,9 +406,9 @@ function chooseBlendWord() {
   localStorage.setItem(blendOffsetKey, String((offset + 1) % candidates.length));
   return candidates[offset];
 }
-function startBlend() {
+function startBlend(forcedWord = null) {
   mode = 'blend-choice'; stage = 3; done = false; tries = 0;
-  targetWord = chooseBlendWord();
+  targetWord = forcedWord || chooseBlendWord();
   // Early levels may not yet have enough taught sounds to make a decodable
   // word. Keep the session going with another short, familiar sound turn.
   if (!targetWord) { render(false); return; }
@@ -380,6 +437,8 @@ function startBlend() {
   $('wordBuilder').classList.add('hidden');
   $('feedback').textContent = '';
   $('next').classList.add('hidden');
+  $('card').classList.remove('hidden');
+  $('done').style.display = 'none';
   playSequence(['blend_start', ...targetWord.sounds.map(letter => 'sound_' + letter), 'word_' + targetWord.word]);
 }
 function startWordBuild() {
@@ -480,7 +539,6 @@ function finish() {
   clearTimeout(sessionTimer);
   $('finishSession').classList.add('hidden');
   $('sheet').classList.remove('open');
-  soundIndex = findCurrentLevel();
   localStorage.setItem(progressKey, String(soundIndex));
   updateMap();
   $('card').classList.add('hidden');
@@ -512,7 +570,8 @@ $('choices').onclick = e => { const b = e.target.closest('.choice'); if (b) answ
 $('next').onclick = () => {
   if (mode === 'letter' && done) {
     if (isMastered(item()[0])) {
-      soundIndex = findCurrentLevel();
+      soundIndex = findNextLevel(soundIndex);
+      localStorage.setItem(progressKey, String(soundIndex));
       reviewQueue = chooseSessionReviews();
       reviewCursor = 0;
       nextLevelAfterReview = true;
@@ -542,7 +601,8 @@ function exportProgress() {
       .filter(([letter]) => storedMastery[letter]?.sessions?.length)
       .map(([letter]) => [letter, storedMastery[letter].sessions.slice(-3)])),
     metSounds: [...metSounds],
-    sessionMinutes: sessionLength / 60000
+    sessionMinutes: sessionLength / 60000,
+    soundIndex
   };
   const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -586,7 +646,9 @@ async function importProgress(file) {
     sessionLength = backup.sessionMinutes * 60000;
     localStorage.setItem(sessionLengthKey, String(backup.sessionMinutes));
   }
-  soundIndex = findCurrentLevel();
+  soundIndex = Number.isInteger(backup.soundIndex) && backup.soundIndex >= 0 && backup.soundIndex < curriculum.length
+    ? backup.soundIndex
+    : findCurrentLevel();
   localStorage.setItem(progressKey, String(soundIndex));
   $('backupStatus').textContent = 'Progress restored and merged. Reloading the app…';
   setTimeout(() => location.reload(), 250);
@@ -609,6 +671,17 @@ $('progressFile').onchange = async e => {
 
 $('startButton').onclick = () => beginSession();
 $('finishSession').onclick = finish;
+$('jumpLessonBtn').onclick = () => jumpToLesson(Number($('lessonSelect').value));
+$('map').onclick = e => {
+  const lessonBtn = e.target.closest('button[data-lesson-index]');
+  if (lessonBtn) { jumpToLesson(Number(lessonBtn.dataset.lessonIndex)); return; }
+  const blendBtn = e.target.closest('button[data-blend-word]');
+  if (blendBtn) jumpToBlendWord(blendBtn.dataset.blendWord);
+};
+$('parentSummary').onclick = e => {
+  const lessonBtn = e.target.closest('button[data-lesson-index]');
+  if (lessonBtn) jumpToLesson(Number(lessonBtn.dataset.lessonIndex));
+};
 $('sessionMinutes').value = String(sessionLength / 60000);
 $('sessionMinutes').onchange = e => {
   const minutes = Number(e.target.value);
